@@ -12,11 +12,12 @@ from copy import deepcopy
 
 questiongroup={}
 question={}
+questinhints={}
 
 questionindex=set([])
 groupindex=set([])
 
-#DEBUG=True
+DEBUG=True
 DEBUG=False
 DOLLAR_PREFIX="SSSS"
 
@@ -43,7 +44,10 @@ while True:
     try:
         words=line.split('.',3)
 
-
+        #extract word[3]="hint.1=text"
+#        if re.match("\d",words[2]) and re.match("\d",word[4]) and word[3]=="hint":
+#            (k,value)=words[4].split("=",1)
+#            questionhints[(int(words[1]),int(words[2]),word[3],k)]=value
         if re.match("\d",words[2]):
             (key,value)=words[3].split("=",1)
             question[(int(words[1]),int(words[2]),key)]=value
@@ -209,12 +213,21 @@ for i in groupindex:
             [ d for d in [ c for c in q if c.tag == "prtpartiallycorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正しい部分もありますが, 正解ではありません.</p>")
             [ d for d in [ c for c in q if c.tag == "prtincorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解ではありません.</p>")
 
+            for k in question:
+                if k[0]==i and k[1]==j and re.match('^hint.\d$',k[2]):
+                    tmp=etree.Element("text")
+                    tmp.text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[k]))
+                    tmp2=etree.Element("hint")
+                    tmp2.append(tmp)
+                    q.append(tmp2)
+
 # truefeedback            
-# hints
 
         except IndexError:
             print i,j
             raise
+
+
         
         root.append(q)
                 
