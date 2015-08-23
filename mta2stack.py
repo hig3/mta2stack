@@ -140,7 +140,7 @@ primitive:(a*x^n+b)^m</text>
       </feedbackvariables>
       <node>
         <name>0</name>
-        <answertest>Diff</answertest>
+        <answertest>AlgEquiv</answertest>
         <sans>ans1</sans>
         <tans>diff(primitive,x)</tans>
         <testoptions>x</testoptions>
@@ -184,13 +184,14 @@ for i in groupindex:
         try:
             [ d for d in [ c for c in q if c.tag == "name" ][0] if d.tag=="text"][0].text=question[(i,j,'name')]
 # if editing=uesHTML?
-            [ d for d in [ c for c in q if c.tag == "questiontext" ][0] if d.tag=="text"][0].text=etree.CDATA(question[(i,j,'question')].replace('$',DOLLAR_PREFIX)+ "<p>[[input:ans1]]</p><div>[[validation:ans1]]</div>")
+            [ d for d in [ c for c in q if c.tag == "questiontext" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'question')])+ "<p>[[input:ans1]]</p><div>[[validation:ans1]]</div>")
 # TODO: ans1, validation
             [ d for d in [ c for c in q if c.tag == "input" ][0] if d.tag=="tans"][0].text=question[(i,j,'maple_answer')].replace('$',DOLLAR_PREFIX)
 # strip $
 #            [ d for d in [ c for c in q if c.tag == "questionnote" ][0] if d.tag=="tans"][0].text=question[(i,j,'uid')]
-            [ d for d in [ c for c in q if c.tag == "specificfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(question[(i,j,'comment')].replace('$',DOLLAR_PREFIX))
-# titled feedback in Maple T.A., shown to everyone
+#            [ d for d in [ c for c in q if c.tag == "specificfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'comment')]))
+
+            # titled feedback in Maple T.A., shown to everyone
 #            [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'SSSS\1',question[(i,j,'solution')]))
             [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'solution')]))
             tempstr=question[(i,j,'algorithm')].replace('$',DOLLAR_PREFIX)
@@ -198,17 +199,18 @@ for i in groupindex:
             deststr=re.sub(r'maple\("printf\(MathML\[ExportPresentation\]\((.+?)\)\)"\)',r'\1', deststr)
             deststr=re.sub(r'maple\("(.+?)"\)',r'\1', deststr)
             deststr=re.sub(r'range\((\d),(\d),(\d)\)',r'rand_with_step(\1,\2,\3)', deststr)
-            deststr=re.sub(r'range\((\d),(\d)\)',r'rand_with_step(\1,\2)', deststr)            
+            deststr=re.sub(r'range\((\d),(\d)\)',r'rand_with_step(\1,\2,1)', deststr)            
 
             [ d for d in [ c for c in q if c.tag == "questionvariables" ][0] if d.tag=="text"][0].text='/*'+tempstr+'*/'+'\n'+'/*'+deststr+'*/'
             
-            [ e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="tans"][0].text=question[(i,j,'maple_answer')]
+            [ e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="tans"][0].text=question[(i,j,'maple_answer')].replace('$',DOLLAR_PREFIX)
             [ f for f in [e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="falsefeedback"][0] if f.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'comment')]))
             [ d for d in [ c for c in q if c.tag == "prtcorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解です.</p>")
             [ d for d in [ c for c in q if c.tag == "prtpartiallycorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正しい部分もありますが, 正解ではありません.</p>")
             [ d for d in [ c for c in q if c.tag == "prtincorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解ではありません.</p>")
 
 # truefeedback            
+# hints
 
         except IndexError:
             print i,j
