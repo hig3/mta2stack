@@ -20,27 +20,31 @@ groupindex=set([])
 DEBUG=True
 DEBUG=False
 DOLLAR_PREFIX="SSSS"
-
+displaysolution=False
 
 while True:
     line=""
     noline=False
     while True:
-        a=sys.stdin.readline().rstrip()
+        a=sys.stdin.readline()
 
         if not a:
             noline=True
             break
-            
-        line=line+a
+        
+        line=line+a.rstrip()
         if line[-1:] is "@":
             line=line[:-1]
             break
-
+        
     if noline:
         break
 
-        
+#   delete empty lines
+#   if re.match(r'^\s*$',line):
+#        print "afo"
+#        continue
+
     try:
         words=line.split('.',3)
 
@@ -179,36 +183,45 @@ for i in groupindex:
     category = etree.SubElement(firstquestion,"category")
     categorytext=etree.SubElement(category,"text")
     categorytext.text=questiongroup[(i,'topic')]
-#    root.append(etree.Element("question")).append(etree.Element("text")).text=questiongroup[(i,'topic')]
 
     for j in questionindex:
         q= deepcopy(qtree)
-#        etree.SubElement(root,"question",type="stack")
-#        name=etree.SubElement(q,"name")
         try:
-            [ d for d in [ c for c in q if c.tag == "name" ][0] if d.tag=="text"][0].text=question[(i,j,'name')]
+            [ d for d in [ c for c in q if c.tag == "name" ][0] if d.tag=="text"][0].text=question[(i,j,'name')].decode('utf-8')
 # if editing=uesHTML?
-            [ d for d in [ c for c in q if c.tag == "questiontext" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'question')])+ "<p>[[input:ans1]]</p><div>[[validation:ans1]]</div>")
-# TODO: ans1, validation
-            [ d for d in [ c for c in q if c.tag == "input" ][0] if d.tag=="tans"][0].text=question[(i,j,'maple_answer')].replace('$',DOLLAR_PREFIX)
-# strip $
-#            [ d for d in [ c for c in q if c.tag == "questionnote" ][0] if d.tag=="tans"][0].text=question[(i,j,'uid')]
-#            [ d for d in [ c for c in q if c.tag == "specificfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'comment')]))
+            [ d for d in [ c for c in q if c.tag == "questiontext" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'question')]).decode('utf-8')+ "<p>[[input:ans1]]</p><div>[[validation:ans1]]</div>")
 
-            # titled feedback in Maple T.A., shown to everyone
-#            [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'SSSS\1',question[(i,j,'solution')]))
-            [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'solution')]))
+            # Shown to everyone in the study session
+            #            [ f for f in [e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="falsefeedback"][0] if f.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'solution')]))
+
+            #            [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'SSSS\1',question[(i,j,'solution')]))
             tempstr=question[(i,j,'algorithm')].replace('$',DOLLAR_PREFIX)
             deststr=tempstr.translate(string.maketrans('=;',':\n'),'$')
-            deststr=re.sub(r'maple\("printf\(MathML\[ExportPresentation\]\((.+?)\)\)"\)',r'\1', deststr)
+            deststr=re.sub(r'maple\("printf\(\s*MathML\[ExportPresentation\]\((.+?)\)\)"\)',r'\1', deststr)
             deststr=re.sub(r'maple\("(.+?)"\)',r'\1', deststr)
-            deststr=re.sub(r'range\((\d),(\d),(\d)\)',r'rand_with_step(\1,\2,\3)', deststr)
-            deststr=re.sub(r'range\((\d),(\d)\)',r'rand_with_step(\1,\2,1)', deststr)            
+            deststr=re.sub(r'range\(\s*(-?\d)\s*,\s*(-?\d)\s*,\s*(-?\d)\s*\)',r'rand_with_step(\1,\2,\3)', deststr)
+            deststr=re.sub(r'range\(\s*(-?\d),\s*(-?\d)\)',r'rand_with_step(\1,\2,1)', deststr)            
 
+          
             [ d for d in [ c for c in q if c.tag == "questionvariables" ][0] if d.tag=="text"][0].text='/*'+tempstr+'*/'+'\n'+'/*'+deststr+'*/'
+
+            [ d for d in [ c for c in q if c.tag == "questionnote" ][0] if d.tag=="text"][0].text=re.sub(r'\$(\w+)',r'@SSSS\1@',re.sub(r'=.*?;',r',',question[(i,j,'algorithm')]))
+
+            if (i,j,'maple_answer') in question:
+                answer=question[(i,j,'maple_answer')].replace('$',DOLLAR_PREFIX)
+            elif (i,j,'answer.num') in question:
+                answer=question[(i,j,'answer.num')].replace('$',DOLLAR_PREFIX)
+            else:
+                answer=DOLLAR_PREFIX + 'ans';
+
+# TODO: ans1, validation
+            [ d for d in [ c for c in q if c.tag == "input" ][0] if d.tag=="tans"][0].text=answer
+                
+            [ e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="tans"][0].text=answer
+
+#  titled feedback in Maple T.A., shown to everyone                
+            [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'comment')]).decode('utf-8'))
             
-            [ e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="tans"][0].text=question[(i,j,'maple_answer')].replace('$',DOLLAR_PREFIX)
-            [ f for f in [e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="falsefeedback"][0] if f.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'comment')]))
             [ d for d in [ c for c in q if c.tag == "prtcorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解です.</p>")
             [ d for d in [ c for c in q if c.tag == "prtpartiallycorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正しい部分もありますが, 正解ではありません.</p>")
             [ d for d in [ c for c in q if c.tag == "prtincorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解ではありません.</p>")
