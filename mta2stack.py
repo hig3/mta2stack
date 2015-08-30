@@ -18,7 +18,7 @@ questionindex=set([])
 groupindex=set([])
 
 DEBUG=True
-DEBUG=False
+# DEBUG=False
 DOLLAR_PREFIX="SSSS"
 displaysolution=False
 
@@ -55,7 +55,7 @@ while True:
         if re.match("\d",words[2]):
             (key,value)=words[3].split("=",1)
             question[(int(words[1]),int(words[2]),key)]=value
-            questionindex.add(int(words[2]))
+            questionindex.add((int(words[1]),int(words[2])))
         else:
             (key,value)=words[2].split("=",1)
             questiongroup[(int(words[1]),key)]=value
@@ -184,7 +184,11 @@ for i in groupindex:
     categorytext=etree.SubElement(category,"text")
     categorytext.text=questiongroup[(i,'topic')]
 
-    for j in questionindex:
+    for (k,j) in questionindex:
+        if k!=i:
+            continue
+        if question[(i,j,'mode')]!="Maple" or (question[(i,j,'type')] != "formula" and question[(i,j,'type')] != "formula"):
+            continue
         q= deepcopy(qtree)
         try:
             [ d for d in [ c for c in q if c.tag == "name" ][0] if d.tag=="text"][0].text=question[(i,j,'name')].decode('utf-8')
@@ -195,24 +199,23 @@ for i in groupindex:
             #            [ f for f in [e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="falsefeedback"][0] if f.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'solution')]))
 
             #            [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'SSSS\1',question[(i,j,'solution')]))
-            tempstr=question[(i,j,'algorithm')].replace('$',DOLLAR_PREFIX)
-            deststr=tempstr.translate(string.maketrans('=;',':\n'),'$')
-            deststr=re.sub(r'maple\("printf\(\s*MathML\[ExportPresentation\]\((.+?)\)\)"\)',r'\1', deststr)
-            deststr=re.sub(r'maple\("(.+?)"\)',r'\1', deststr)
-            deststr=re.sub(r'range\(\s*(-?\d)\s*,\s*(-?\d)\s*,\s*(-?\d)\s*\)',r'rand_with_step(\1,\2,\3)', deststr)
-            deststr=re.sub(r'range\(\s*(-?\d),\s*(-?\d)\)',r'rand_with_step(\1,\2,1)', deststr)            
+            if (i,j,'algorithm') in question:
+                tempstr=question[(i,j,'algorithm')].replace('$',DOLLAR_PREFIX)
+                deststr=tempstr.translate(string.maketrans('=;',':\n'),'$')
+                deststr=re.sub(r'maple\("printf\(\s*MathML\[ExportPresentation\]\((.+?)\)\)"\)',r'\1', deststr)
+                deststr=re.sub(r'maple\("(.+?)"\)',r'\1', deststr)
+                deststr=re.sub(r'range\(\s*(-?\d)\s*,\s*(-?\d)\s*,\s*(-?\d)\s*\)',r'rand_with_step(\1,\2,\3)', deststr)
+                deststr=re.sub(r'range\(\s*(-?\d),\s*(-?\d)\)',r'rand_with_step(\1,\2,1)', deststr)            
+                [ d for d in [ c for c in q if c.tag == "questionvariables" ][0] if d.tag=="text"][0].text='/*'+tempstr+'*/'+'\n'+'/*'+deststr+'*/'
 
-          
-            [ d for d in [ c for c in q if c.tag == "questionvariables" ][0] if d.tag=="text"][0].text='/*'+tempstr+'*/'+'\n'+'/*'+deststr+'*/'
-
-            [ d for d in [ c for c in q if c.tag == "questionnote" ][0] if d.tag=="text"][0].text=re.sub(r'\$(\w+)',r'@SSSS\1@',re.sub(r'=.*?;',r',',question[(i,j,'algorithm')]))
+                [ d for d in [ c for c in q if c.tag == "questionnote" ][0] if d.tag=="text"][0].text=re.sub(r'\$(\w+)',r'@SSSS\1@',re.sub(r'=.*?;',r',',question[(i,j,'algorithm')]))
 
             if (i,j,'maple_answer') in question:
                 answer=question[(i,j,'maple_answer')].replace('$',DOLLAR_PREFIX)
             elif (i,j,'answer.num') in question:
                 answer=question[(i,j,'answer.num')].replace('$',DOLLAR_PREFIX)
             else:
-                answer=DOLLAR_PREFIX + 'ans';
+                answer=re.sub('RESPONSE=()\);','\1',question[(i,j,'maple')])
 
 # TODO: ans1, validation
             [ d for d in [ c for c in q if c.tag == "input" ][0] if d.tag=="tans"][0].text=answer
@@ -220,7 +223,8 @@ for i in groupindex:
             [ e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="tans"][0].text=answer
 
 #  titled feedback in Maple T.A., shown to everyone                
-            [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'comment')]).decode('utf-8'))
+            if (i,j,'comment') in question:
+                [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'comment')]).decode('utf-8'))
             
             [ d for d in [ c for c in q if c.tag == "prtcorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解です.</p>")
             [ d for d in [ c for c in q if c.tag == "prtpartiallycorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正しい部分もありますが, 正解ではありません.</p>")
