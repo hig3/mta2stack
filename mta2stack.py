@@ -18,7 +18,7 @@ questionindex=set([])
 groupindex=set([])
 
 DEBUG=True
-# DEBUG=False
+DEBUG=False
 DOLLAR_PREFIX="SSSS"
 displaysolution=False
 
@@ -56,6 +56,8 @@ while True:
             (key,value)=words[3].split("=",1)
             question[(int(words[1]),int(words[2]),key)]=value
             questionindex.add((int(words[1]),int(words[2])))
+            if re.match("part.1.",key):
+                question[(int(words[1]),int(words[2]),re.sub(r'part\.1\.(.*)$',r'\1',key))]=value
         else:
             (key,value)=words[2].split("=",1)
             questiongroup[(int(words[1]),key)]=value
@@ -63,9 +65,9 @@ while True:
     except:
         raise
 
-    if DEBUG:
-        print questiongroup
-        print question
+if DEBUG:
+    print questiongroup
+    print question
         #print groupindex
         #print questionindex
 
@@ -73,7 +75,7 @@ while True:
         #    print questiongroup[ ( i,'topic')]
         #    for j in questionindex:
         #        print question[( i,j,'name')]
-        print "parsing finished"
+    print "parsing finished"
         
 questionxml=u"""
   <question type="stack">
@@ -187,8 +189,8 @@ for i in groupindex:
     for (k,j) in questionindex:
         if k!=i:
             continue
-        if question[(i,j,'mode')]!="Maple" or (question[(i,j,'type')] != "formula" and question[(i,j,'type')] != "formula"):
-            continue
+#        if (question[(i,j,'mode')]!="Maple" and question[(i,j,'mode')]!="Formula Mod C" and question[(i,j,'mode')]!="Formula") or (question[(i,j,'type')] != "formula" and question[(i,j,'type')] != "numerical"):
+#            continue
         q= deepcopy(qtree)
         try:
             [ d for d in [ c for c in q if c.tag == "name" ][0] if d.tag=="text"][0].text=question[(i,j,'name')].decode('utf-8')
@@ -214,8 +216,12 @@ for i in groupindex:
                 answer=question[(i,j,'maple_answer')].replace('$',DOLLAR_PREFIX)
             elif (i,j,'answer.num') in question:
                 answer=question[(i,j,'answer.num')].replace('$',DOLLAR_PREFIX)
+            elif (i,j,'answer') in question:
+                answer=question[(i,j,'answer')].replace('$',DOLLAR_PREFIX)
+            elif (i,j,'maple') in question:
+                answer=re.sub(r'evalb\(.*RESPONSE\s*=\s*(.*)\)',r'\1',question[(i,j,'maple')]).replace('$',DOLLAR_PREFIX)
             else:
-                answer=re.sub('RESPONSE=()\);','\1',question[(i,j,'maple')])
+                answer=""
 
 # TODO: ans1, validation
             [ d for d in [ c for c in q if c.tag == "input" ][0] if d.tag=="tans"][0].text=answer
