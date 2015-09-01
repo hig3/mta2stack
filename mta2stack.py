@@ -52,7 +52,7 @@ while True:
 #        if re.match("\d",words[2]) and re.match("\d",word[4]) and word[3]=="hint":
 #            (k,value)=words[4].split("=",1)
 #            questionhints[(int(words[1]),int(words[2]),word[3],k)]=value
-        if re.match("\d",words[2]):
+        if re.match("\d+",words[2]):
             (key,value)=words[3].split("=",1)
             question[(int(words[1]),int(words[2]),key)]=value
             questionindex.add((int(words[1]),int(words[2])))
@@ -95,17 +95,13 @@ questionxml=u"""
     <penalty>0.1000000</penalty>
     <hidden>0</hidden>
     <questionvariables>
-      <text>a:rand(6)+2
-n:rand(4)+2
-b:rand(6)+1
-m:rand(4)+2
-primitive:(a*x^n+b)^m</text>
+      <text>/*empty*/</text>
     </questionvariables>
     <specificfeedback format="html">
       <text><![CDATA[<p>[[feedback:prt1]]</p>]]></text>
     </specificfeedback>
     <questionnote>
-      <text>1234</text>
+      <text>randomization-id-dummy</text>
     </questionnote>
     <questionsimplify>1</questionsimplify>
     <assumepositive>0</assumepositive>
@@ -189,9 +185,12 @@ for i in groupindex:
     for (k,j) in questionindex:
         if k!=i:
             continue
-#        if (question[(i,j,'mode')]!="Maple" and question[(i,j,'mode')]!="Formula Mod C" and question[(i,j,'mode')]!="Formula") or (question[(i,j,'type')] != "formula" and question[(i,j,'type')] != "numerical"):
-#            continue
-        q= deepcopy(qtree)
+        if (question[(i,j,'mode')]!="Maple" and question[(i,j,'mode')]!="Formula Mod C" and question[(i,j,'mode')]!="Formula" and question[(i,j,'mode')]!="Numeric"):
+# or (question[(i,j,'type')] != "Formula"):
+            sys.stderr.write('Skipped: %d %d '%( i,j) + ' ' + question[(i,j,'name')]+ ' mode:' + question[(i,j,'mode')]+'\n' )
+            continue
+        q=deepcopy(qtree)
+
         try:
             [ d for d in [ c for c in q if c.tag == "name" ][0] if d.tag=="text"][0].text=question[(i,j,'name')].decode('utf-8')
 # if editing=uesHTML?
@@ -206,8 +205,8 @@ for i in groupindex:
                 deststr=tempstr.translate(string.maketrans('=;',':\n'),'$')
                 deststr=re.sub(r'maple\("printf\(\s*MathML\[ExportPresentation\]\((.+?)\)\)"\)',r'\1', deststr)
                 deststr=re.sub(r'maple\("(.+?)"\)',r'\1', deststr)
-                deststr=re.sub(r'range\(\s*(-?\d)\s*,\s*(-?\d)\s*,\s*(-?\d)\s*\)',r'rand_with_step(\1,\2,\3)', deststr)
-                deststr=re.sub(r'range\(\s*(-?\d),\s*(-?\d)\)',r'rand_with_step(\1,\2,1)', deststr)            
+                deststr=re.sub(r'range\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*\)',r'rand_with_step(\1,\2,\3)', deststr)
+                deststr=re.sub(r'range\(\s*(-?\d+),\s*(-?\d+)\)',r'rand_with_step(\1,\2,1)', deststr)            
                 [ d for d in [ c for c in q if c.tag == "questionvariables" ][0] if d.tag=="text"][0].text='/*'+tempstr+'*/'+'\n'+'/*'+deststr+'*/'
 
                 [ d for d in [ c for c in q if c.tag == "questionnote" ][0] if d.tag=="text"][0].text=re.sub(r'\$(\w+)',r'@SSSS\1@',re.sub(r'=.*?;',r',',question[(i,j,'algorithm')]))
@@ -219,7 +218,7 @@ for i in groupindex:
             elif (i,j,'answer') in question:
                 answer=question[(i,j,'answer')].replace('$',DOLLAR_PREFIX)
             elif (i,j,'maple') in question:
-                answer=re.sub(r'evalb\(.*RESPONSE\s*=\s*(.*)\)',r'\1',question[(i,j,'maple')]).replace('$',DOLLAR_PREFIX)
+                answer=re.sub(r'evalb\(.*RESPONSE\s*=\s*(.*)\);',r'\1',question[(i,j,'maple')]).replace('$',DOLLAR_PREFIX)
             else:
                 answer=""
 
@@ -237,7 +236,7 @@ for i in groupindex:
             [ d for d in [ c for c in q if c.tag == "prtincorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解ではありません.</p>")
 
             for k in question:
-                if k[0]==i and k[1]==j and re.match('^hint.\d$',k[2]):
+                if k[0]==i and k[1]==j and re.match('^hint.\d+$',k[2]):
                     tmp=etree.Element("text")
                     tmp.text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[k]))
                     tmp2=etree.Element("hint")
