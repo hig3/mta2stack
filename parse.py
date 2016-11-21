@@ -177,10 +177,13 @@ for i in groupindex:
         [ d for d in [ c for c in q if c.tag == "name" ][0] if d.tag=="text"][0].text=question[(i,j,'name')]
 # if editing=uesHTML?
         [ d for d in [ c for c in q if c.tag == "questiontext" ][0] if d.tag=="text"][0].text=question[(i,j,'question')]
-        [ d for d in [ c for c in q if c.tag == "input" ][0] if d.tag=="tans"][0].text=question[(i,j,'maple')]        # strip RESPONSE=
+# TODO: add CDATA and ans1, validation
+        [ d for d in [ c for c in q if c.tag == "input" ][0] if d.tag=="tans"][0].text=question[(i,j,'maple')]
+# TODO: strip RESPONSE=
         [ e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="tans"][0].text=question[(i,j,'maple')]
         [ f for f in [e for e in [ d for d in [ c for c in q if c.tag == "prt" ][0] if d.tag=="node"][0] if e.tag=="falsefeedback"][0] if f.tag=="text"][0].text=question[(i,j,'comment')]
-
+# TODO: add CDATA and ans1, validation
+        
         root.append(q)
                 
 print '<?xml version="1.0" encoding="UTF-8"?>'

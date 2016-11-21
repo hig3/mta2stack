@@ -80,10 +80,10 @@ if DEBUG:
 questionxml=u"""
   <question type="stack">
     <name>
-      <text>有理関数の微分1</text>
+      <text>Differentiation</text>
     </name>
     <questiontext format="html">
-      <text><![CDATA[<p>次の関数を微分せよ.</p>
+      <text><![CDATA[<p>Differentiate the following function with respect to x .</p>
 <p>\[ @ primitive @ \]</p>
 <p>[[input:ans1]]</p>
 <div>[[validation:ans1]]</div>]]></text>
@@ -106,13 +106,13 @@ questionxml=u"""
     <questionsimplify>1</questionsimplify>
     <assumepositive>0</assumepositive>
     <prtcorrect format="html">
-      <text><![CDATA[<p>正解です.</p>]]></text>
+      <text><![CDATA[<p>Correct.</p>]]></text>
     </prtcorrect>
     <prtpartiallycorrect format="html">
-      <text><![CDATA[<p>正しい部分もありますが, 正解ではありません.</p>]]></text>
+      <text><![CDATA[<p>Partially correct.</p>]]></text>
     </prtpartiallycorrect>
     <prtincorrect format="html">
-      <text><![CDATA[<p>正解ではありません.</p>]]></text>
+      <text><![CDATA[<p>Incorrect.</p>]]></text>
     </prtincorrect>
     <multiplicationsign>dot</multiplicationsign>
     <sqrtsign>1</sqrtsign>
@@ -231,9 +231,9 @@ for i in groupindex:
             if (i,j,'comment') in question:
                 [ d for d in [ c for c in q if c.tag == "generalfeedback" ][0] if d.tag=="text"][0].text=etree.CDATA(re.sub(r'\$(\w+)',r'@SSSS\1@',question[(i,j,'comment')]).decode('utf-8'))
             
-            [ d for d in [ c for c in q if c.tag == "prtcorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解です.</p>")
-            [ d for d in [ c for c in q if c.tag == "prtpartiallycorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正しい部分もありますが, 正解ではありません.</p>")
-            [ d for d in [ c for c in q if c.tag == "prtincorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>正解ではありません.</p>")
+            [ d for d in [ c for c in q if c.tag == "prtcorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>Correct.</p>")
+            [ d for d in [ c for c in q if c.tag == "prtpartiallycorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>Partially correct.</p>")
+            [ d for d in [ c for c in q if c.tag == "prtincorrect" ][0] if d.tag=="text"][0].text=etree.CDATA(u"<p>Incorrect.</p>")
 
             for k in question:
                 if k[0]==i and k[1]==j and re.match('^hint.\d+$',k[2]):
